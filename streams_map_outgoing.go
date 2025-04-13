@@ -89,6 +89,7 @@ func (m *outgoingStreamsMap[T]) OpenStreamSync(ctx context.Context) (T, error) {
 			m.openQueue = slices.DeleteFunc(m.openQueue, func(c chan struct{}) bool {
 				return c == waitChan
 			})
+			m.maybeUnblockOpenSync()
 			return *new(T), ctx.Err()
 		case <-waitChan:
 		}
@@ -103,7 +104,7 @@ func (m *outgoingStreamsMap[T]) OpenStreamSync(ctx context.Context) (T, error) {
 		}
 		str := m.openStream()
 		m.openQueue = m.openQueue[1:]
-		m.unblockOpenSync()
+		m.maybeUnblockOpenSync()
 		return str, nil
 	}
 }
@@ -173,7 +174,7 @@ func (m *outgoingStreamsMap[T]) SetMaxStream(num protocol.StreamNum) {
 	if m.maxStream < m.nextStream-1+protocol.StreamNum(len(m.openQueue)) {
 		m.maybeSendBlockedFrame()
 	}
-	m.unblockOpenSync()
+	m.maybeUnblockOpenSync()
 }
 
 // UpdateSendWindow is called when the peer's transport parameters are received.
@@ -188,7 +189,7 @@ func (m *outgoingStreamsMap[T]) UpdateSendWindow(limit protocol.ByteCount) {
 }
 
 // unblockOpenSync unblocks the next OpenStreamSync go-routine to open a new stream
-func (m *outgoingStreamsMap[T]) unblockOpenSync() {
+func (m *outgoingStreamsMap[T]) maybeUnblockOpenSync() {
 	if len(m.openQueue) == 0 {
 		return
 	}
