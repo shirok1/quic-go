@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -60,7 +59,7 @@ func init() {
 	})
 
 	http.HandleFunc("/demo/echo", func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			fmt.Printf("error reading body while handling /echo: %s\n", err.Error())
 		}
