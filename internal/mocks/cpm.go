@@ -4,7 +4,6 @@
 package mocks
 
 import (
-	reflect "reflect"
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
@@ -44,7 +43,7 @@ func (_m *MockConnectionParametersManager) SetFromMap(_param0 map[handshake.Tag]
 
 // SetFromMap indicates an expected call of SetFromMap
 func (_mr *MockConnectionParametersManagerMockRecorder) SetFromMap(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SetFromMap", reflect.TypeOf((*MockConnectionParametersManager)(nil).SetFromMap), arg0)
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "SetFromMap", arg0)
 }
 
 // GetHelloMap mocks base method
@@ -57,7 +56,7 @@ func (_m *MockConnectionParametersManager) GetHelloMap() (map[handshake.Tag][]by
 
 // GetHelloMap indicates an expected call of GetHelloMap
 func (_mr *MockConnectionParametersManagerMockRecorder) GetHelloMap() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetHelloMap", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetHelloMap))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetHelloMap")
 }
 
 // GetSendStreamFlowControlWindow mocks base method
@@ -69,7 +68,7 @@ func (_m *MockConnectionParametersManager) GetSendStreamFlowControlWindow() prot
 
 // GetSendStreamFlowControlWindow indicates an expected call of GetSendStreamFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetSendStreamFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetSendStreamFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetSendStreamFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetSendStreamFlowControlWindow")
 }
 
 // GetSendConnectionFlowControlWindow mocks base method
@@ -81,7 +80,7 @@ func (_m *MockConnectionParametersManager) GetSendConnectionFlowControlWindow() 
 
 // GetSendConnectionFlowControlWindow indicates an expected call of GetSendConnectionFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetSendConnectionFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetSendConnectionFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetSendConnectionFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetSendConnectionFlowControlWindow")
 }
 
 // GetReceiveStreamFlowControlWindow mocks base method
@@ -93,7 +92,7 @@ func (_m *MockConnectionParametersManager) GetReceiveStreamFlowControlWindow() p
 
 // GetReceiveStreamFlowControlWindow indicates an expected call of GetReceiveStreamFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetReceiveStreamFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetReceiveStreamFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetReceiveStreamFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetReceiveStreamFlowControlWindow")
 }
 
 // GetMaxReceiveStreamFlowControlWindow mocks base method
@@ -105,7 +104,7 @@ func (_m *MockConnectionParametersManager) GetMaxReceiveStreamFlowControlWindow(
 
 // GetMaxReceiveStreamFlowControlWindow indicates an expected call of GetMaxReceiveStreamFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetMaxReceiveStreamFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMaxReceiveStreamFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetMaxReceiveStreamFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetMaxReceiveStreamFlowControlWindow")
 }
 
 // GetReceiveConnectionFlowControlWindow mocks base method
@@ -117,7 +116,7 @@ func (_m *MockConnectionParametersManager) GetReceiveConnectionFlowControlWindow
 
 // GetReceiveConnectionFlowControlWindow indicates an expected call of GetReceiveConnectionFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetReceiveConnectionFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetReceiveConnectionFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetReceiveConnectionFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetReceiveConnectionFlowControlWindow")
 }
 
 // GetMaxReceiveConnectionFlowControlWindow mocks base method
@@ -129,7 +128,7 @@ func (_m *MockConnectionParametersManager) GetMaxReceiveConnectionFlowControlWin
 
 // GetMaxReceiveConnectionFlowControlWindow indicates an expected call of GetMaxReceiveConnectionFlowControlWindow
 func (_mr *MockConnectionParametersManagerMockRecorder) GetMaxReceiveConnectionFlowControlWindow() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMaxReceiveConnectionFlowControlWindow", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetMaxReceiveConnectionFlowControlWindow))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetMaxReceiveConnectionFlowControlWindow")
 }
 
 // GetMaxOutgoingStreams mocks base method
@@ -141,7 +140,7 @@ func (_m *MockConnectionParametersManager) GetMaxOutgoingStreams() uint32 {
 
 // GetMaxOutgoingStreams indicates an expected call of GetMaxOutgoingStreams
 func (_mr *MockConnectionParametersManagerMockRecorder) GetMaxOutgoingStreams() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMaxOutgoingStreams", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetMaxOutgoingStreams))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetMaxOutgoingStreams")
 }
 
 // GetMaxIncomingStreams mocks base method
@@ -153,7 +152,7 @@ func (_m *MockConnectionParametersManager) GetMaxIncomingStreams() uint32 {
 
 // GetMaxIncomingStreams indicates an expected call of GetMaxIncomingStreams
 func (_mr *MockConnectionParametersManagerMockRecorder) GetMaxIncomingStreams() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetMaxIncomingStreams", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetMaxIncomingStreams))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetMaxIncomingStreams")
 }
 
 // GetIdleConnectionStateLifetime mocks base method
@@ -165,7 +164,7 @@ func (_m *MockConnectionParametersManager) GetIdleConnectionStateLifetime() time
 
 // GetIdleConnectionStateLifetime indicates an expected call of GetIdleConnectionStateLifetime
 func (_mr *MockConnectionParametersManagerMockRecorder) GetIdleConnectionStateLifetime() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetIdleConnectionStateLifetime", reflect.TypeOf((*MockConnectionParametersManager)(nil).GetIdleConnectionStateLifetime))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "GetIdleConnectionStateLifetime")
 }
 
 // TruncateConnectionID mocks base method
@@ -177,5 +176,5 @@ func (_m *MockConnectionParametersManager) TruncateConnectionID() bool {
 
 // TruncateConnectionID indicates an expected call of TruncateConnectionID
 func (_mr *MockConnectionParametersManagerMockRecorder) TruncateConnectionID() *gomock.Call {
-	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "TruncateConnectionID", reflect.TypeOf((*MockConnectionParametersManager)(nil).TruncateConnectionID))
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "TruncateConnectionID")
 }

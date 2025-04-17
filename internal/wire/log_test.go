@@ -57,12 +57,13 @@ var _ = Describe("Frame logging", func() {
 
 	It("logs ACK frames", func() {
 		frame := &AckFrame{
+			PathID:       0,
 			LargestAcked: 0x1337,
 			LowestAcked:  0x42,
 			DelayTime:    1 * time.Millisecond,
 		}
 		LogFrame(frame, false)
-		Expect(buf.Bytes()).To(ContainSubstring("\t<- &wire.AckFrame{LargestAcked: 0x1337, LowestAcked: 0x42, AckRanges: []wire.AckRange(nil), DelayTime: 1ms}\n"))
+		Expect(buf.Bytes()).To(ContainSubstring("\t<- &wire.AckFrame{PathID: 0x0, LargestAcked: 0x1337, LowestAcked: 0x42, AckRanges: []wire.AckRange(nil), DelayTime: 1ms}\n"))
 	})
 
 	It("logs incoming StopWaiting frames", func() {
@@ -80,5 +81,15 @@ var _ = Describe("Frame logging", func() {
 		}
 		LogFrame(frame, true)
 		Expect(buf.Bytes()).To(ContainSubstring("\t-> &wire.StopWaitingFrame{LeastUnacked: 0x1337, PacketNumberLen: 0x4}\n"))
+	})
+
+	It("logs ClosePath frames", func() {
+		frame := &ClosePathFrame{
+			PathID:       7,
+			LargestAcked: 0x1337,
+			LowestAcked:  0x42,
+		}
+		LogFrame(frame, false)
+		Expect(buf.Bytes()).To(ContainSubstring("\t<- &wire.ClosePathFrame{PathID: 0x7, LargestAcked: 0x1337, LowestAcked: 0x42, AckRanges: []wire.AckRange(nil)}\n"))
 	})
 })
