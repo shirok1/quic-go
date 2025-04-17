@@ -793,7 +793,6 @@ func (s *session) sendPackedPacket(packet *packedPacket, pth *path) error {
 	return pth.conn.Write(packet.raw)
 }
 
-func (s *session) logPacket(packet *packedPacket) {
 func (s *session) sendConnectionClose(quicErr *qerr.QuicError) error {
 	s.paths[0].SetLeastUnacked(s.paths[0].sentPacketHandler.GetLeastUnacked())
 	packet, err := s.packer.PackConnectionClose(&wire.ConnectionCloseFrame{
@@ -950,10 +949,6 @@ func (s *session) LocalAddr() net.Addr {
 func (s *session) RemoteAddr() net.Addr {
 	// XXX (QDC): do it like with MPTCP (master initial path), what if it is closed?
 	return s.paths[0].conn.RemoteAddr()
-}
-
-func (s *session) GetVersion() protocol.VersionNumber {
-	return s.version
 }
 
 func (s *session) GetVersion() protocol.VersionNumber {

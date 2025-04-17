@@ -152,7 +152,6 @@ func (m *mockReceivedPacketHandler) GetStatistics() uint64 {
 func (m *mockReceivedPacketHandler) GetClosePathFrame() *wire.ClosePathFrame {
 	panic("not implemented")
 }
-func (m *mockReceivedPacketHandler) GetAlarmTimeout() time.Time { return m.ackAlarm }
 
 var _ ackhandler.ReceivedPacketHandler = &mockReceivedPacketHandler{}
 
