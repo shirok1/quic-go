@@ -2,6 +2,7 @@ package quic
 
 import (
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -198,9 +199,24 @@ func (pcm *pconnManager) createPconns() error {
 	if err != nil {
 		return err
 	}
+	ifaceFilters := strings.Split(os.Getenv("MP_IFACES"), ",")
+	if len(ifaceFilters) == 0 {
+		// ifaceFilters = []string{"eth", "rmnet", "wlan"}
+		ifaceFilters = []string{"en"}
+		utils.Infof("No filters specified in MP_IFACES, fallback to '%s'", strings.Join(ifaceFilters, "', '"))
+	}
 	for _, i := range ifaces {
 		// TODO (QDC): do this in a generic way
-		if !strings.Contains(i.Name, "eth") && !strings.Contains(i.Name, "rmnet") && !strings.Contains(i.Name, "wlan") {
+		flag := false
+		for _, filter := range ifaceFilters {
+			if strings.Contains(i.Name, filter) {
+				utils.Infof("Interface %s matches filter '%s'", i.Name, filter)
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			utils.Infof("Interface %s does not match any filter", i.Name)
 			continue
 		}
 		addrs, err := i.Addrs()
