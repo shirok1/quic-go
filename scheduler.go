@@ -264,6 +264,8 @@ func (sch *scheduler) selectPathFlowAware(s *session, hasRetransmission bool, ha
 		stream, err := s.streamsMap.GetOrOpenStream(f.StreamID)
 		if err != nil {
 			utils.Errorf("Failed to get stream: %v", err)
+		} else if stream == nil {
+			utils.Errorf("Stream already closed")
 		} else {
 			if tagMaybe, ok := stream.GetTag(FlowTagSlot); ok {
 				tag = tagMaybe.(flowTag)
