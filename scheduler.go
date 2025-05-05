@@ -270,13 +270,13 @@ func (sch *scheduler) selectPathFlowAware(s *session, hasRetransmission bool, ha
 	for _, p := range paths {
 		switch tag {
 		case FlowAPI:
-			score := float64(p.rtt.Milliseconds()) * (1 + flowAPILambda*p.loss)
+			effectiveRTT := float64(p.rtt.Milliseconds()) * (1 + flowAPILambda*p.loss)
 			// Give a slight preference to the path from which data was received
 			if fromPth != nil && p.pth == fromPth {
-				score *= flowAPIPreference
+				effectiveRTT *= flowAPIPreference
 			}
-			if score < minScore {
-				minScore = score
+			if effectiveRTT < minScore {
+				minScore = effectiveRTT
 				best = p.pth
 			}
 		case FlowCDN:
