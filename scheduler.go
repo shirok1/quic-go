@@ -244,8 +244,9 @@ func (sch *scheduler) performPacketSending(s *session, windowUpdateFrames []*wir
 				utils.Infof("Info for stream %x of %x", frame.StreamID, s.connectionID)
 				for pathID, pth := range s.paths {
 					sntPkts, sntRetrans, sntLost := pth.sentPacketHandler.GetStatistics()
+					lossRate := pth.sentPacketHandler.GetPacketLossRate()
 					rcvPkts := pth.receivedPacketHandler.GetStatistics()
-					utils.Infof("Path %x: sent %d retrans %d lost %d; rcv %d rtt %v", pathID, sntPkts, sntRetrans, sntLost, rcvPkts, pth.rttStats.SmoothedRTT())
+					utils.Infof("Path %x: sent %d retrans %d lost %d (loss rate: %.2f%%); rcv %d rtt %v", pathID, sntPkts, sntRetrans, sntLost, lossRate*100, rcvPkts, pth.rttStats.SmoothedRTT())
 				}
 				s.pathsLock.RUnlock()
 			}

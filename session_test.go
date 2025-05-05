@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/lucas-clemente/quic-go/ackhandler"
+	"github.com/lucas-clemente/quic-go/congestion"
 	"github.com/lucas-clemente/quic-go/internal/crypto"
 	"github.com/lucas-clemente/quic-go/internal/handshake"
 	"github.com/lucas-clemente/quic-go/internal/mocks"
@@ -102,6 +103,9 @@ func (h *mockSentPacketHandler) ShouldSendRetransmittablePacket() bool {
 	return b
 }
 func (h *mockSentPacketHandler) GetStatistics() (uint64, uint64, uint64) { panic("not implemented") }
+func (h *mockSentPacketHandler) GetPacketLossRate() float64              { panic("not implemented") }
+func (h *mockSentPacketHandler) GetCongestionWindow() protocol.ByteCount { panic("not implemented") }
+func (h *mockSentPacketHandler) BandwidthEstimate() congestion.Bandwidth { panic("not implemented") }
 
 func (h *mockSentPacketHandler) GetStopWaitingFrame(force bool) *wire.StopWaitingFrame {
 	h.requestedStopWaiting = true

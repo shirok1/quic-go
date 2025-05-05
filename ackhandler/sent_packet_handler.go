@@ -116,6 +116,21 @@ func (h *sentPacketHandler) GetStatistics() (uint64, uint64, uint64) {
 	return h.packets, h.retransmissions, h.losses
 }
 
+func (h *sentPacketHandler) GetPacketLossRate() float64 {
+	if h.packets == 0 {
+		return 0
+	}
+	return float64(h.losses) / float64(h.packets)
+}
+
+func (h *sentPacketHandler) GetCongestionWindow() protocol.ByteCount {
+	return h.congestion.GetCongestionWindow()
+}
+
+func (h *sentPacketHandler) BandwidthEstimate() congestion.Bandwidth {
+	return h.congestion.BandwidthEstimate()
+}
+
 func (h *sentPacketHandler) largestInOrderAcked() protocol.PacketNumber {
 	if f := h.packetHistory.Front(); f != nil {
 		return f.Value.PacketNumber - 1
