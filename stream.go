@@ -86,6 +86,7 @@ func newStream(StreamID protocol.StreamID,
 		frameQueue:         newStreamFrameSorter(),
 		readChan:           make(chan struct{}, 1),
 		writeChan:          make(chan struct{}, 1),
+		tags:               make(map[string]interface{}),
 	}
 	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
 	return s
