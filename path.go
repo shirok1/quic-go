@@ -22,7 +22,8 @@ type path struct {
 	conn   connection
 	sess   *session
 
-	rttStats *congestion.RTTStats
+	rttStats   *congestion.RTTStats
+	oliaSender *congestion.OliaSender
 
 	sentPacketHandler     ackhandler.SentPacketHandler
 	receivedPacketHandler ackhandler.ReceivedPacketHandler
@@ -59,6 +60,12 @@ func (p *path) setup(oliaSenders map[protocol.PathID]*congestion.OliaSender) {
 	if p.sess.version >= protocol.VersionMP && oliaSenders != nil && p.pathID != protocol.InitialPathID {
 		cong = congestion.NewOliaSender(oliaSenders, p.rttStats, protocol.InitialCongestionWindow, protocol.DefaultMaxCongestionWindow)
 		oliaSenders[p.pathID] = cong.(*congestion.OliaSender)
+		// Ensure the type assertion is valid
+		var ok bool
+		p.oliaSender, ok = cong.(*congestion.OliaSender)
+		if !ok {
+			panic("cong is not an *OliaSender")
+		}
 	}
 
 	sentPacketHandler := ackhandler.NewSentPacketHandler(p.rttStats, cong, p.onRTO)
