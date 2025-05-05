@@ -91,6 +91,13 @@ func (f *streamFramer) AddClosePathFrameForTransmission(closePathFrame *wire.Clo
 	f.closePathFrameQueue = append(f.closePathFrameQueue, closePathFrame)
 }
 
+func (f *streamFramer) PeekCurrentStream() *wire.StreamFrame {
+	if len(f.retransmissionQueue) == 0 {
+		return nil
+	}
+	return f.retransmissionQueue[0]
+}
+
 func (f *streamFramer) PopClosePathFrame() *wire.ClosePathFrame {
 	if len(f.closePathFrameQueue) == 0 {
 		return nil
