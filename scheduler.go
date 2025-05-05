@@ -4,10 +4,27 @@ import (
 	"time"
 
 	"github.com/lucas-clemente/quic-go/ackhandler"
+	"github.com/lucas-clemente/quic-go/congestion"
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/lucas-clemente/quic-go/internal/wire"
 )
+
+const FlowTagSlot = "flow"
+
+type flowTag int
+
+const (
+	FlowUnknown flowTag = iota
+	FlowAPI
+	FlowCDN
+)
+
+const flowAPILambda = 3
+const flowSamePathPreference = 0.05 // 5% preference for same path
+const flowAPIPreference = 1 - flowSamePathPreference
+const flowCDNBase = congestion.Bandwidth(100)
+const flowCDNPreference = congestion.Bandwidth(float64(uint64(flowCDNBase)) * (1 + flowSamePathPreference))
 
 type scheduler struct {
 	// XXX Currently round-robin based, inspired from MPTCP scheduler
@@ -204,11 +221,96 @@ pathLoop:
 	return selectedPath
 }
 
+func (sch *scheduler) selectPathFlowAware(s *session, hasRetransmission bool, hasStreamRetransmission bool, fromPth *path) *path {
+	if sch.quotas == nil {
+		sch.setup()
+	}
+
+	type pathScore struct {
+		pth  *path
+		pid  protocol.PathID
+		rtt  time.Duration
+		loss float64
+		cwnd protocol.ByteCount
+		bndw congestion.Bandwidth
+	}
+
+	var paths []pathScore
+
+	s.pathsLock.RLock()
+	for pid, p := range s.paths {
+		if !hasRetransmission && !p.SendingAllowed() {
+			continue
+		}
+		if p.potentiallyFailed.Get() {
+			continue
+		}
+		rtt := p.rttStats.SmoothedRTT()
+		loss := p.sentPacketHandler.GetPacketLossRate()
+		cwnd := protocol.ByteCount(p.sentPacketHandler.GetCongestionWindow())
+		bndw := p.sentPacketHandler.BandwidthEstimate()
+		paths = append(paths, pathScore{pth: p, pid: pid, rtt: rtt, loss: loss, cwnd: cwnd, bndw: bndw})
+	}
+	s.pathsLock.RUnlock()
+
+	var best *path
+	minScore := float64(1e9)
+	maxThroughput := congestion.Bandwidth(0)
+
+	// Use flow tag
+	var tag flowTag = FlowUnknown
+
+	if f := s.streamFramer.PeekCurrentStream(); f != nil {
+		stream, _ := s.streamsMap.GetOrOpenStream(f.StreamID)
+		if tagMaybe, ok := stream.GetTag(FlowTagSlot); ok {
+			tag = tagMaybe.(flowTag)
+		}
+	}
+
+	for _, p := range paths {
+		switch tag {
+		case FlowAPI:
+			score := float64(p.rtt.Milliseconds()) * (1 + flowAPILambda*p.loss)
+			// Give a slight preference to the path from which data was received
+			if fromPth != nil && p.pth == fromPth {
+				score *= flowAPIPreference
+			}
+			if score < minScore {
+				minScore = score
+				best = p.pth
+			}
+		case FlowCDN:
+			// throughput := p.cwnd * 1000 / protocol.ByteCount(p.rtt.Milliseconds()+1)
+			throughput := p.bndw
+			// Give a slight preference to the path from which data was received
+			if fromPth != nil && p.pth == fromPth {
+				throughput *= flowCDNBase
+			} else {
+				throughput *= flowCDNPreference
+			}
+			if throughput > maxThroughput {
+				maxThroughput = throughput
+				best = p.pth
+			}
+		default:
+			// panic("TODO: unknown flow tag")
+			// // fallback: LowRTT
+			if float64(p.rtt.Milliseconds()) < minScore {
+				minScore = float64(p.rtt.Milliseconds())
+				best = p.pth
+			}
+		}
+	}
+
+	return best
+}
+
 // Lock of s.paths must be held
 func (sch *scheduler) selectPath(s *session, hasRetransmission bool, hasStreamRetransmission bool, fromPth *path) *path {
 	// XXX Currently round-robin
 	// TODO select the right scheduler dynamically
-	return sch.selectPathLowLatency(s, hasRetransmission, hasStreamRetransmission, fromPth)
+	return sch.selectPathFlowAware(s, hasRetransmission, hasStreamRetransmission, fromPth)
+	// return sch.selectPathLowLatency(s, hasRetransmission, hasStreamRetransmission, fromPth)
 	// return sch.selectPathRoundRobin(s, hasRetransmission, hasStreamRetransmission, fromPth)
 }
 
