@@ -57,6 +57,10 @@ type stream struct {
 	writeDeadline  time.Time
 
 	flowControlManager flowcontrol.FlowControlManager
+
+	// tags stores metadata associated with this stream
+	tags    map[string]interface{}
+	tagsMux sync.RWMutex // protects the tags map
 }
 
 var _ Stream = &stream{}
@@ -438,4 +442,44 @@ func (s *stream) GetBytesSent() (protocol.ByteCount, error) {
 
 func (s *stream) GetBytesRetrans() (protocol.ByteCount, error) {
 	return s.flowControlManager.GetBytesRetrans(s.streamID)
+}
+
+// SetTag associates a tag with this stream
+func (s *stream) SetTag(key string, value interface{}) {
+	s.tagsMux.Lock()
+	defer s.tagsMux.Unlock()
+
+	if s.tags == nil {
+		s.tags = make(map[string]interface{})
+	}
+	s.tags[key] = value
+}
+
+// GetTag retrieves a tag value by key
+func (s *stream) GetTag(key string) (interface{}, bool) {
+	s.tagsMux.RLock()
+	defer s.tagsMux.RUnlock()
+
+	if s.tags == nil {
+		return nil, false
+	}
+	val, ok := s.tags[key]
+	return val, ok
+}
+
+// GetTags returns all tags associated with this stream
+func (s *stream) GetTags() map[string]interface{} {
+	s.tagsMux.RLock()
+	defer s.tagsMux.RUnlock()
+
+	if s.tags == nil {
+		return nil
+	}
+
+	// Return a copy to avoid concurrent map access issues
+	tagsCopy := make(map[string]interface{}, len(s.tags))
+	for k, v := range s.tags {
+		tagsCopy[k] = v
+	}
+	return tagsCopy
 }
