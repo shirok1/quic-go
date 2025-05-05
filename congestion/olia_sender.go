@@ -49,12 +49,6 @@ type OliaSender struct {
 	// ACK counter for the Reno implementation
 	congestionWindowCount protocol.ByteCount
 
-	// Statistics about packet loss
-	totalPacketsSent   uint64
-	totalPacketsLost   uint64
-	lastLossRateUpdate time.Time
-	lossRateWindow     time.Duration // Window for calculating loss rate
-
 	initialCongestionWindow    protocol.PacketNumber
 	initialMaxCongestionWindow protocol.PacketNumber
 }
@@ -96,20 +90,19 @@ func (o *OliaSender) OnPacketSent(sentTime time.Time, bytesInFlight protocol.Byt
 	}
 	o.largestSentPacketNumber = packetNumber
 	o.hybridSlowStart.OnPacketSent(packetNumber)
-	o.totalPacketsSent++
 	return true
 }
 
 func (o *OliaSender) GetCongestionWindow() protocol.ByteCount {
-	return protocol.ByteCount(o.congestionWindow)
+	return protocol.ByteCount(o.congestionWindow) * protocol.DefaultTCPMSS
 }
 
 func (o *OliaSender) GetSlowStartThreshold() protocol.ByteCount {
-	return protocol.ByteCount(o.slowstartThreshold)
+	return protocol.ByteCount(o.slowstartThreshold) * protocol.DefaultTCPMSS
 }
 
 func (o *OliaSender) ExitSlowstart() {
-	o.slowstartThreshold = protocol.PacketNumber(o.GetCongestionWindow())
+	o.slowstartThreshold = o.congestionWindow
 }
 
 func (o *OliaSender) MaybeExitSlowStart() {
@@ -172,7 +165,7 @@ func (o *OliaSender) getEpsilon() {
 	for _, os := range o.oliaSenders {
 		tmpRTT = os.rttStats.SmoothedRTT() * os.rttStats.SmoothedRTT()
 		tmpBytes = os.olia.SmoothedBytesBetweenLosses()
-		if int64(tmpBytes)*bestRTT.Nanoseconds() >= int64(bestBytes)*tmpRTT.Nanoseconds() {
+		if int64(tmpBytes) * bestRTT.Nanoseconds() >= int64(bestBytes) * tmpRTT.Nanoseconds() {
 			bestRTT = tmpRTT
 			bestBytes = tmpBytes
 		}
@@ -187,7 +180,7 @@ func (o *OliaSender) getEpsilon() {
 		} else {
 			tmpRTT = os.rttStats.SmoothedRTT() * os.rttStats.SmoothedRTT()
 			tmpBytes = os.olia.SmoothedBytesBetweenLosses()
-			if int64(tmpBytes)*bestRTT.Nanoseconds() >= int64(bestBytes)*tmpRTT.Nanoseconds() {
+			if int64(tmpBytes) * bestRTT.Nanoseconds() >= int64(bestBytes) * tmpRTT.Nanoseconds() {
 				BNotM++
 			}
 		}
@@ -203,7 +196,7 @@ func (o *OliaSender) getEpsilon() {
 			tmpBytes = os.olia.SmoothedBytesBetweenLosses()
 			tmpCwnd = os.congestionWindow
 
-			if tmpCwnd < maxCwnd && int64(tmpBytes)*bestRTT.Nanoseconds() >= int64(bestBytes)*tmpRTT.Nanoseconds() {
+			if tmpCwnd < maxCwnd && int64(tmpBytes) * bestRTT.Nanoseconds() >= int64(bestBytes) * tmpRTT.Nanoseconds() {
 				os.olia.epsilonNum = 1
 				os.olia.epsilonDen = uint32(len(o.oliaSenders)) * uint32(BNotM)
 			} else if tmpCwnd == maxCwnd {
@@ -260,7 +253,7 @@ func (o *OliaSender) OnPacketLost(packetNumber protocol.PacketNumber, lostBytes 
 			o.stats.slowstartPacketsLost++
 			o.stats.slowstartBytesLost += lostBytes
 			if o.slowStartLargeReduction {
-				if o.stats.slowstartPacketsLost == 1 || (o.stats.slowstartBytesLost/protocol.DefaultTCPMSS) > (o.stats.slowstartBytesLost-lostBytes)/protocol.DefaultTCPMSS {
+				if o.stats.slowstartPacketsLost == 1 || (o.stats.slowstartBytesLost/protocol.DefaultTCPMSS) > (o.stats.slowstartBytesLost - lostBytes)/protocol.DefaultTCPMSS {
 					// Reduce congestion window by 1 for every mss of bytes lost.
 					o.congestionWindow = utils.MaxPacketNumber(o.congestionWindow-1, o.minCongestionWindow)
 				}
@@ -292,9 +285,6 @@ func (o *OliaSender) OnPacketLost(packetNumber protocol.PacketNumber, lostBytes 
 	// reset packet count from congestion avoidance mode. We start
 	// counting again when we're out of recovery.
 	o.congestionWindowCount = 0
-
-	o.totalPacketsLost++
-	o.lastLossRateUpdate = time.Now()
 }
 
 func (o *OliaSender) SetNumEmulatedConnections(n int) {
@@ -333,7 +323,7 @@ func (o *OliaSender) RetransmissionDelay() time.Duration {
 	if o.rttStats.SmoothedRTT() == 0 {
 		return 0
 	}
-	return o.rttStats.SmoothedRTT() + o.rttStats.MeanDeviation()*4
+	return o.rttStats.SmoothedRTT() + o.rttStats.MeanDeviation() * 4
 }
 
 func (o *OliaSender) SmoothedRTT() time.Duration {
@@ -351,21 +341,6 @@ func (o *OliaSender) BandwidthEstimate() Bandwidth {
 		return 0
 	}
 	return BandwidthFromDelta(o.GetCongestionWindow(), srtt)
-}
-
-func (o *OliaSender) GetLossRate() float64 {
-	if o.totalPacketsSent == 0 {
-		return 0
-	}
-	return float64(o.totalPacketsLost) / float64(o.totalPacketsSent)
-}
-
-func (o *OliaSender) GetLossRateWindow() time.Duration {
-	return o.lossRateWindow
-}
-
-func (o *OliaSender) SetLossRateWindow(window time.Duration) {
-	o.lossRateWindow = window
 }
 
 // HybridSlowStart returns the hybrid slow start instance for testing
