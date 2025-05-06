@@ -65,13 +65,16 @@ func main() {
 
 	har := loadHAR(harPath)
 
+	sem := make(chan struct{}, 16) // 模拟信号量
 	var wg sync.WaitGroup
 	for idx, entry := range har.Log.Entries {
 		utils.Infof("client is asking for entry %d", idx)
 		<-time.After(time.Millisecond * 1)
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(i int, filename string) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			stream, err := session.OpenStream()
 			if err != nil {
 				log.Println("stream error:", err)
