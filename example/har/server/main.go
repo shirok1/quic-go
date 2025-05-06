@@ -162,17 +162,13 @@ func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64, ma
 	// 发送对应 response 文件内容
 	filename := entry.Response.Content.File
 	if filename != "" {
-		file, err := os.Open(filepath.Join(harDir, filename))
+		data, err := os.ReadFile(filepath.Join(harDir, filename))
 		if err != nil {
-			log.Fatal(err)
+			log.Println("read file error:", err)
 			return
 		}
-		defer file.Close()
-		for range magnification {
-			if _, err := file.Seek(0, io.SeekStart); err != nil {
-				utils.Errorf("seek to start: %w", err)
-			}
-			_, err = io.Copy(stream, file)
+		for range *&magnification {
+			_, err := stream.Write(data)
 			if err != nil {
 				log.Println("stream copy error:", err)
 				return

@@ -114,17 +114,13 @@ func main() {
 
 			if filename != "" {
 				// 再发送请求文件内容
-				file, err := os.Open(filepath.Join(harDir, filename))
+				data, err := os.ReadFile(filepath.Join(harDir, filename))
 				if err != nil {
-					log.Println("postdata file error:", err)
+					log.Println("read file error:", err)
 					return
 				}
-				defer file.Close()
 				for range *magnify {
-					if _, err := file.Seek(0, io.SeekStart); err != nil {
-						utils.Errorf("seek to start: %w", err)
-					}
-					_, err = io.Copy(stream, file)
+					_, err := stream.Write(data)
 					if err != nil {
 						log.Println("stream copy error:", err)
 						return
