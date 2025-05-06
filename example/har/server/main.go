@@ -140,28 +140,18 @@ func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64) {
 	// 发送对应 response 文件内容
 	filename := har.Log.Entries[index].Response.Content.File
 	if filename != "" {
-		data, err := os.ReadFile(filepath.Join(harDir, filename))
+		file, err := os.Open(filepath.Join(harDir, filename))
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
-		_, err = stream.Write(data)
+		defer file.Close()
+		_, err = io.Copy(stream, file)
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
 	}
-	// file, err := os.Open(filepath.Join(harDir, filename))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
-	// defer file.Close()
-	// _, err = io.Copy(stream, file)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
 	utils.Infof("sent response file %s", filename)
 	atomic.AddUint64(count, 1)
 }
