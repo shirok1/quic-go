@@ -21,6 +21,8 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
+const magnification = 100
+
 // Setup a bare-bones TLS config for the server
 func generateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -146,10 +148,15 @@ func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64) {
 			return
 		}
 		defer file.Close()
-		_, err = io.Copy(stream, file)
-		if err != nil {
-			log.Fatal(err)
-			return
+		for range magnification {
+			if _, err := file.Seek(0, io.SeekStart); err != nil {
+				utils.Errorf("seek to start: %w", err)
+			}
+			_, err = io.Copy(stream, file)
+			if err != nil {
+				log.Println("stream copy error:", err)
+				return
+			}
 		}
 	}
 	utils.Infof("sent response file %s", filename)

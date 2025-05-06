@@ -17,6 +17,8 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
+const magnification = 100
+
 func generateTLSConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: true,
@@ -94,10 +96,15 @@ func main() {
 					return
 				}
 				defer file.Close()
-				_, err = io.Copy(stream, file)
-				if err != nil {
-					log.Println("stream copy error:", err)
-					return
+				for range magnification {
+					if _, err := file.Seek(0, io.SeekStart); err != nil {
+						utils.Errorf("seek to start: %w", err)
+					}
+					_, err = io.Copy(stream, file)
+					if err != nil {
+						log.Println("stream copy error:", err)
+						return
+					}
 				}
 			}
 
