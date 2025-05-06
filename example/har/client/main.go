@@ -17,8 +17,6 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
-const magnification = 100
-
 func generateTLSConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: true,
@@ -41,6 +39,8 @@ type HAR struct {
 func main() {
 	verbose := flag.Bool("v", false, "verbose")
 	addr := flag.String("addr", "localhost:4242", "server address")
+	magnify := flag.Uint("magnify", 1, "repeat file transfer")
+	semsize := flag.Int("sem", 16, "cocurrent limit")
 	// harPath := flag.String("har", "har.json", "path to HAR file")
 	flag.Parse()
 	harPaths := flag.Args()
@@ -65,7 +65,7 @@ func main() {
 
 	har := loadHAR(harPath)
 
-	sem := make(chan struct{}, 16) // 模拟信号量
+	sem := make(chan struct{}, *semsize) // 模拟信号量
 	var wg sync.WaitGroup
 	for idx, entry := range har.Log.Entries {
 		utils.Infof("client is asking for entry %d", idx)
@@ -99,7 +99,7 @@ func main() {
 					return
 				}
 				defer file.Close()
-				for range magnification {
+				for range *magnify {
 					if _, err := file.Seek(0, io.SeekStart); err != nil {
 						utils.Errorf("seek to start: %w", err)
 					}

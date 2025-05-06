@@ -21,8 +21,6 @@ import (
 	"github.com/lucas-clemente/quic-go/internal/utils"
 )
 
-const magnification = 100
-
 // Setup a bare-bones TLS config for the server
 func generateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -64,6 +62,7 @@ type HAR struct {
 func main() {
 	verbose := flag.Bool("v", false, "verbose")
 	addr := flag.String("addr", "localhost:4242", "server address")
+	magnify := flag.Uint("magnify", 1, "repeat file transfer")
 	// harPath := flag.String("har", "har.json", "path to HAR file")
 	flag.Parse()
 	harPaths := flag.Args()
@@ -107,14 +106,14 @@ func main() {
 					// 	return
 					// }
 				}
-				go handleStream(stream, har, harDir, &count)
+				go handleStream(stream, har, harDir, &count, *magnify)
 			}
 			utils.Infof("connection closed, total sent %d/%d", count, len(har.Log.Entries))
 		}(sess)
 	}
 }
 
-func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64) {
+func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64, magnification uint) {
 	defer stream.Close()
 
 	// 读取客户端发来的编号
