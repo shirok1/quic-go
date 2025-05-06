@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -13,8 +14,10 @@ import (
 	"io"
 	"log"
 	"math/big"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 
 	"github.com/lucas-clemente/quic-go"
@@ -46,9 +49,7 @@ type HAR struct {
 	Log struct {
 		Entries []struct {
 			Request struct {
-				PostData struct {
-					File string `json:"_file"`
-				} `json:"postData"`
+				URL string `json:"url"`
 			} `json:"request"`
 			Response struct {
 				Content struct {
@@ -63,6 +64,7 @@ func main() {
 	verbose := flag.Bool("v", false, "verbose")
 	addr := flag.String("addr", "localhost:4242", "server address")
 	magnify := flag.Uint("magnify", 1, "repeat file transfer")
+	cdnlist := flag.String("cdnlist", "", "suffixes will do")
 	// harPath := flag.String("har", "har.json", "path to HAR file")
 	flag.Parse()
 	harPaths := flag.Args()
@@ -71,6 +73,11 @@ func main() {
 	}
 	harPath := harPaths[0]
 	harDir := filepath.Dir(harPath)
+
+	cdns, err := loadSuffixList(*cdnlist)
+	if err != nil {
+		utils.Infof("cdnlist: %v", err)
+	}
 
 	if *verbose {
 		utils.SetLogLevel(utils.LogLevelDebug)
@@ -106,14 +113,14 @@ func main() {
 					// 	return
 					// }
 				}
-				go handleStream(stream, har, harDir, &count, *magnify)
+				go handleStream(stream, har, harDir, &count, *magnify, cdns)
 			}
 			utils.Infof("connection closed, total sent %d/%d", count, len(har.Log.Entries))
 		}(sess)
 	}
 }
 
-func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64, magnification uint) {
+func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64, magnification uint, cdns []string) {
 	defer stream.Close()
 
 	// 读取客户端发来的编号
@@ -138,8 +145,22 @@ func handleStream(stream quic.Stream, har *HAR, harDir string, count *uint64, ma
 		io.Copy(io.Discard, stream)
 	}()
 
+	entry := har.Log.Entries[index]
+
+	u, err := url.Parse(entry.Request.URL)
+	if err != nil {
+		log.Println("url parse error:", err)
+		return
+	}
+
+	if hasAnySuffix(u.Host, cdns) {
+		stream.SetTag(quic.FlowTagSlot, quic.FlowCDN)
+	} else {
+		stream.SetTag(quic.FlowTagSlot, quic.FlowAPI)
+	}
+
 	// 发送对应 response 文件内容
-	filename := har.Log.Entries[index].Response.Content.File
+	filename := entry.Response.Content.File
 	if filename != "" {
 		file, err := os.Open(filepath.Join(harDir, filename))
 		if err != nil {
@@ -173,4 +194,39 @@ func loadHAR(path string) *HAR {
 	}
 	utils.Infof("loaded %d entries", len(har.Log.Entries))
 	return &har
+}
+
+func loadSuffixList(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var suffixes []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			suffixes = append(suffixes, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return suffixes, nil
+}
+
+func hasAnySuffix(s string, suffixes []string) bool {
+	if suffixes == nil {
+		return false
+	}
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(s, suffix) {
+			return true
+		}
+	}
+	return false
 }

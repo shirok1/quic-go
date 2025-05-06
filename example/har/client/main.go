@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/tls"
 	"encoding/binary"
 	"encoding/json"
@@ -8,8 +9,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,6 +31,7 @@ type HAR struct {
 	Log struct {
 		Entries []struct {
 			Request struct {
+				URL      string `json:"url"`
 				PostData struct {
 					File string `json:"_file"`
 				} `json:"postData"`
@@ -41,6 +45,7 @@ func main() {
 	addr := flag.String("addr", "localhost:4242", "server address")
 	magnify := flag.Uint("magnify", 1, "repeat file transfer")
 	semsize := flag.Int("sem", 16, "cocurrent limit")
+	cdnlist := flag.String("cdnlist", "", "suffixes will do")
 	delay := flag.Int64("delay", 5, "before next go func")
 	// harPath := flag.String("har", "har.json", "path to HAR file")
 	flag.Parse()
@@ -50,6 +55,11 @@ func main() {
 	}
 	harPath := harPaths[0]
 	harDir := filepath.Dir(harPath)
+
+	cdns, err := loadSuffixList(*cdnlist)
+	if err != nil {
+		utils.Infof("cdnlist: %v", err)
+	}
 
 	if *verbose {
 		utils.SetLogLevel(utils.LogLevelDebug)
@@ -83,7 +93,17 @@ func main() {
 			}
 			defer stream.Close()
 
-			stream.SetTag(quic.FlowTagSlot, quic.FlowAPI)
+			u, err := url.Parse(entry.Request.URL)
+			if err != nil {
+				log.Println("url parse error:", err)
+				return
+			}
+
+			if hasAnySuffix(u.Host, cdns) {
+				stream.SetTag(quic.FlowTagSlot, quic.FlowCDN)
+			} else {
+				stream.SetTag(quic.FlowTagSlot, quic.FlowAPI)
+			}
 
 			// 发送编号
 			var num uint64 = uint64(i)
@@ -132,4 +152,39 @@ func loadHAR(path string) *HAR {
 	utils.Infof("loaded %d entries", len(har.Log.Entries))
 	fmt.Println(har.Log.Entries)
 	return &har
+}
+
+func loadSuffixList(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var suffixes []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			suffixes = append(suffixes, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return suffixes, nil
+}
+
+func hasAnySuffix(s string, suffixes []string) bool {
+	if suffixes == nil {
+		return false
+	}
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(s, suffix) {
+			return true
+		}
+	}
+	return false
 }
