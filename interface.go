@@ -56,11 +56,11 @@ type Stream interface {
 	// GetBytesRetrans returns the number of bytes of the stream that were retransmitted to the peer
 	GetBytesRetrans() (protocol.ByteCount, error)
 	// GetTag retrieves a tag value by key
-	GetTag(key string) (interface{}, bool)
+	GetTag(key string) (any, bool)
 	// SetTag associates a tag with this stream
-	SetTag(key string, value interface{})
+	SetTag(key string, value any)
 	// GetTags returns all tags associated with this stream
-	GetTags() map[string]interface{}
+	GetTags() map[string]any
 }
 
 // A Session is a QUIC connection between two peers.

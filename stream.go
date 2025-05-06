@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"sync"
 	"time"
@@ -59,7 +60,7 @@ type stream struct {
 	flowControlManager flowcontrol.FlowControlManager
 
 	// tags stores metadata associated with this stream
-	tags    map[string]interface{}
+	tags    map[string]any
 	tagsMux sync.RWMutex // protects the tags map
 }
 
@@ -86,7 +87,7 @@ func newStream(StreamID protocol.StreamID,
 		frameQueue:         newStreamFrameSorter(),
 		readChan:           make(chan struct{}, 1),
 		writeChan:          make(chan struct{}, 1),
-		tags:               make(map[string]interface{}),
+		tags:               make(map[string]any),
 	}
 	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
 	return s
@@ -446,18 +447,18 @@ func (s *stream) GetBytesRetrans() (protocol.ByteCount, error) {
 }
 
 // SetTag associates a tag with this stream
-func (s *stream) SetTag(key string, value interface{}) {
+func (s *stream) SetTag(key string, value any) {
 	s.tagsMux.Lock()
 	defer s.tagsMux.Unlock()
 
 	if s.tags == nil {
-		s.tags = make(map[string]interface{})
+		s.tags = make(map[string]any)
 	}
 	s.tags[key] = value
 }
 
 // GetTag retrieves a tag value by key
-func (s *stream) GetTag(key string) (interface{}, bool) {
+func (s *stream) GetTag(key string) (any, bool) {
 	s.tagsMux.RLock()
 	defer s.tagsMux.RUnlock()
 
@@ -469,7 +470,7 @@ func (s *stream) GetTag(key string) (interface{}, bool) {
 }
 
 // GetTags returns all tags associated with this stream
-func (s *stream) GetTags() map[string]interface{} {
+func (s *stream) GetTags() map[string]any {
 	s.tagsMux.RLock()
 	defer s.tagsMux.RUnlock()
 
@@ -478,9 +479,7 @@ func (s *stream) GetTags() map[string]interface{} {
 	}
 
 	// Return a copy to avoid concurrent map access issues
-	tagsCopy := make(map[string]interface{}, len(s.tags))
-	for k, v := range s.tags {
-		tagsCopy[k] = v
-	}
+	tagsCopy := make(map[string]any, len(s.tags))
+	maps.Copy(tagsCopy, s.tags)
 	return tagsCopy
 }

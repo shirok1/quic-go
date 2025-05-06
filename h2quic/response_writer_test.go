@@ -48,9 +48,9 @@ func (s *mockStream) SetReadDeadline(time.Time) error              { panic("not 
 func (s *mockStream) SetWriteDeadline(time.Time) error             { panic("not implemented") }
 func (s *mockStream) GetBytesSent() (protocol.ByteCount, error)    { panic("not implemented") }
 func (s *mockStream) GetBytesRetrans() (protocol.ByteCount, error) { panic("not implemented") }
-func (s *mockStream) GetTag(key string) (interface{}, bool)        { panic("not implemented") }
-func (s *mockStream) SetTag(key string, value interface{})         { panic("not implemented") }
-func (s *mockStream) GetTags() map[string]interface{}              { panic("not implemented") }
+func (s *mockStream) GetTag(key string) (any, bool)                { panic("not implemented") }
+func (s *mockStream) SetTag(key string, value any)                 { panic("not implemented") }
+func (s *mockStream) GetTags() map[string]any                      { panic("not implemented") }
 
 func (s *mockStream) Read(p []byte) (int, error) {
 	n, _ := s.dataToRead.Read(p)
