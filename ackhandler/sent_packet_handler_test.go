@@ -49,6 +49,7 @@ func (m *mockCongestion) SetNumEmulatedConnections(n int)         { panic("not i
 func (m *mockCongestion) OnConnectionMigration()                  { panic("not implemented") }
 func (m *mockCongestion) SetSlowStartLargeReduction(enabled bool) { panic("not implemented") }
 func (m *mockCongestion) SmoothedRTT() time.Duration              { return defaultRTOTimeout / 10 }
+func (m *mockCongestion) BandwidthEstimate() congestion.Bandwidth { panic("not implemented") }
 
 func (m *mockCongestion) OnPacketAcked(n protocol.PacketNumber, l protocol.ByteCount, bif protocol.ByteCount) {
 	m.packetsAcked = append(m.packetsAcked, []interface{}{n, l, bif})
