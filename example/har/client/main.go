@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -60,6 +59,7 @@ func main() {
 	if err != nil {
 		utils.Infof("cdnlist: %v", err)
 	}
+	utils.Infof("cdns: %v", cdns)
 
 	if *verbose {
 		utils.SetLogLevel(utils.LogLevelDebug)
@@ -146,7 +146,6 @@ func loadHAR(path string) *HAR {
 		log.Fatal(err)
 	}
 	utils.Infof("loaded %d entries", len(har.Log.Entries))
-	fmt.Println(har.Log.Entries)
 	return &har
 }
 
