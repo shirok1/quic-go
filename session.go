@@ -588,19 +588,19 @@ func (s *session) handleStreamFrame(frame *wire.StreamFrame) error {
 		// ignore this StreamFrame
 		return nil
 	}
-	if frame.FinBit {
-		// Receiving end of stream, print stats about it
-		// Print client statistics about its paths
-		s.pathsLock.RLock()
-		utils.Infof("Info for stream %x of %x", frame.StreamID, s.connectionID)
-		for pathID, pth := range s.paths {
-			sntPkts, sntRetrans, sntLost := pth.sentPacketHandler.GetStatistics()
-			lossRate := pth.sentPacketHandler.GetPacketLossRate()
-			rcvPkts := pth.receivedPacketHandler.GetStatistics()
-			utils.Infof("Path %x: sent %d retrans %d lost %d (loss rate: %.2f%%); rcv %d", pathID, sntPkts, sntRetrans, sntLost, lossRate*100, rcvPkts)
-		}
-		s.pathsLock.RUnlock()
-	}
+	// if frame.FinBit {
+	// 	// Receiving end of stream, print stats about it
+	// 	// Print client statistics about its paths
+	// 	s.pathsLock.RLock()
+	// 	utils.Infof("Info for stream %x of %x", frame.StreamID, s.connectionID)
+	// 	for pathID, pth := range s.paths {
+	// 		sntPkts, sntRetrans, sntLost := pth.sentPacketHandler.GetStatistics()
+	// 		lossRate := pth.sentPacketHandler.GetPacketLossRate()
+	// 		rcvPkts := pth.receivedPacketHandler.GetStatistics()
+	// 		utils.Infof("Path %x: sent %d retrans %d lost %d (loss rate: %.2f%%); rcv %d", pathID, sntPkts, sntRetrans, sntLost, lossRate*100, rcvPkts)
+	// 	}
+	// 	s.pathsLock.RUnlock()
+	// }
 	return str.AddStreamFrame(frame)
 }
 

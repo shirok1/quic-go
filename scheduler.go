@@ -354,7 +354,7 @@ func (sch *scheduler) performPacketSending(s *session, windowUpdateFrames []*wir
 					sntPkts, sntRetrans, sntLost := pth.sentPacketHandler.GetStatistics()
 					lossRate := pth.sentPacketHandler.GetPacketLossRate()
 					rcvPkts := pth.receivedPacketHandler.GetStatistics()
-					utils.Infof("Path %x: sent %d retrans %d lost %d (loss rate: %.2f%%); rcv %d rtt %v", pathID, sntPkts, sntRetrans, sntLost, lossRate*100, rcvPkts, pth.rttStats.SmoothedRTT())
+					utils.Infof("Path %x (local %v, remote %v): sent %d retrans %d lost %d (loss rate: %.2f%%); rcv %d rtt %v", pathID, pth.conn.LocalAddr(), pth.conn.RemoteAddr(), sntPkts, sntRetrans, sntLost, lossRate*100, rcvPkts, pth.rttStats.SmoothedRTT())
 				}
 				s.pathsLock.RUnlock()
 			}
