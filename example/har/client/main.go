@@ -41,6 +41,7 @@ func main() {
 	addr := flag.String("addr", "localhost:4242", "server address")
 	magnify := flag.Uint("magnify", 1, "repeat file transfer")
 	semsize := flag.Int("sem", 16, "cocurrent limit")
+	delay := flag.Int64("delay", 5, "before next go func")
 	// harPath := flag.String("har", "har.json", "path to HAR file")
 	flag.Parse()
 	harPaths := flag.Args()
@@ -69,7 +70,7 @@ func main() {
 	var wg sync.WaitGroup
 	for idx, entry := range har.Log.Entries {
 		utils.Infof("client is asking for entry %d", idx)
-		<-time.After(time.Millisecond * 1)
+		<-time.After(time.Millisecond * time.Duration(*delay))
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(i int, filename string) {
